@@ -288,6 +288,12 @@ const styles = `
   .s-term-line.indent { padding-left: 20px; }
   .s-source-list { color: var(--text); }
 
+  .s-terminal {
+    text-align: left;
+    align-self: flex-start;
+    margin-left: 20px;
+  }
+
   .s-status-block {
     margin-top: 16px;
     opacity: 0;

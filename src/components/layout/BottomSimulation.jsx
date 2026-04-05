@@ -28,7 +28,7 @@ export default function BottomSimulation({ params, onParamChange }) {
   };
 
   return (
-    <div className="absolute bottom-4 left-4 right-4 bg-black/60 border border-white/10 rounded-lg p-6 backdrop-blur-md max-h-96 overflow-y-auto">
+    <div className="absolute bottom-4 left-80 right-96 bg-black/60 border border-white/10 rounded-lg p-6 backdrop-blur-md max-h-96 overflow-y-auto">
       <style>{`
         .scrollbar-hide::-webkit-scrollbar {
           display: none;
@@ -116,7 +116,7 @@ export default function BottomSimulation({ params, onParamChange }) {
                       defaultChecked={toggle.default}
                       className="sr-only peer"
                     />
-                    <div className="w-8 h-4 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-3 after:w-3 after:transition-all"></div>
+                    <div className="w-8 h-4 bg-white/10 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-3 after:w-3 after:transition-all"></div>
                   </label>
                 </div>
               ))}
