@@ -130,8 +130,8 @@
 
 import { useEffect, useState } from "react";
 import animateLogo from '../../assets/animateLogo.png';
-import vector from '../../assets/vector.svg';
-import LogoName from '../../assets/logoname.svg';
+import vector from '../../assets/Vector.svg';
+import LogoName from '../../assets/Logoname.svg';
 
 const styles = `
   @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@300;400;600;700&display=swap');

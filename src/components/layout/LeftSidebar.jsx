@@ -1,20 +1,20 @@
-export default function LeftSidebar({ models, selectedModel, onModelClick, disasterModels }) {
+export default function LeftSidebar({ models, selectedModel, onModelClick, disasterModels, stats, params }) {
   const liveData = {
     location: "NH34, Dharali, Bhatwari, Uttarkashi, Uttarkhand, India",
-    time: "00:00",
-    phase: "IDLE",
-    rainfall: "00.00 mm/hr",
-    wetCells: "39,176",
-    maxDepth: "00.00 m",
-    floodArea: "0 km2",
-    fps: "4",
-    floodCoverage: "—",
+    time: stats?.time || "00:00",
+    phase: stats?.phase || "IDLE",
+    rainfall: (stats?.rain || 0).toFixed(2) + " mm/hr",
+    wetCells: (stats?.cells || 0).toLocaleString(),
+    maxDepth: (stats?.depth || 0).toFixed(2) + " m",
+    floodArea: (stats?.area || 0) > 1e6 ? `${((stats?.area || 0) / 1e6).toFixed(2)} km²` : `${(stats?.area || 0).toFixed(0)} m²`,
+    fps: stats?.fps || 0,
+    floodCoverage: Math.min(((stats?.cells || 0) / 40000) * 100, 100).toFixed(1) + "%",
   };
 
   const isLiveDataMode = selectedModel?.liveDataMode === true;
 
   return (
-    <div className="w-80 h-[calc(100%-120px)] bg-black/40 border border-white/10 rounded-lg p-6 overflow-y-auto scrollbar-hide flex flex-col">
+    <div className="w-full h-full bg-black/40 border border-white/10 rounded-xl p-6 overflow-y-auto scrollbar-hide flex flex-col shadow-2xl">
       <style>{`
         .scrollbar-hide::-webkit-scrollbar {
           display: none;
