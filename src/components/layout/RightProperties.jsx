@@ -19,7 +19,7 @@ export default function RightProperties({ model, params, onParamChange, onScenar
   const phaseGlow = stats?.phase === 'FLOOD' ? 'bg-red-500' : stats?.phase === 'RAIN' ? 'bg-blue-500' : 'bg-green-500';
 
   return (
-    <div className="w-full h-full bg-black/40 border border-white/10 rounded-xl p-5 overflow-y-auto scrollbar-hide flex flex-col shadow-2xl">
+    <div className="w-80 h-full ml-auto bg-black border border-white/10 rounded-xl p-5 overflow-y-auto scrollbar-hide flex flex-col shadow-2xl">
       <style>{`
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
@@ -80,24 +80,40 @@ export default function RightProperties({ model, params, onParamChange, onScenar
 
         {/* PARAMETERS */}
         <div className="bg-white/5 border border-white/10 rounded-lg p-3">
-          <h3 className="text-[10px] font-bold mb-3 tracking-wider uppercase text-white/40">Parameters</h3>
-          <div className="space-y-3">
+          <h3 className="text-[8px] font-bold mb-1.5 tracking-wider uppercase text-white/40">Parameters</h3>
+          <div className="space-y-1">
             {[
               { label: 'Rainfall (mm/hr)', key: 'rainfall', min: 0, max: 500, step: 1 },
               { label: 'Flood Src', key: 'floodSrc', min: 0.1, max: 5, step: 0.1 },
               { label: 'Viscosity', key: 'viscosity', min: 0.1, max: 1, step: 0.05 },
               { label: 'Evaporation', key: 'evaporation', min: 0, max: 1, step: 0.02 },
             ].map((p) => (
-              <div key={p.key} className="flex flex-col gap-1">
-                <div className="flex justify-between">
-                  <span className="text-white/60 text-[10px] font-bold uppercase">{p.label}</span>
-                  <span className="text-white font-bold text-[10px]">{params[p.key]}</span>
+              <div key={p.key} className="flex items-center gap-1 w-full min-w-0">
+                {/* Label - fixed width, left aligned */}
+                <span className="text-white/60 text-[8px] font-bold uppercase w-24 shrink-0 truncate text-left">
+                  {p.label}
+                </span>
+
+                {/* Slider with min/max labels - takes remaining space */}
+                <div className="flex-1 min-w-0">
+                  <input type="range" min={p.min} max={p.max} step={p.step}
+                    value={params[p.key] || 0}
+                    onChange={(e) => onParamChange(p.key, parseFloat(e.target.value))}
+                    className="w-full h-0.5 bg-white/10 rounded-full appearance-none cursor-pointer"
+                    style={{
+                      accentColor: '#ffffff',
+                    }}
+                  />
+                  <div className="flex justify-between text-[7px] text-white/30">
+                    <span>{p.min}</span>
+                    <span>{p.max}</span>
+                  </div>
                 </div>
-                <input type="range" min={p.min} max={p.max} step={p.step}
-                  value={params[p.key] || 0}
-                  onChange={(e) => onParamChange(p.key, parseFloat(e.target.value))}
-                  className="accent-blue-500 h-1 bg-white/10 rounded-full appearance-none"
-                />
+
+                {/* Value box - fixed width */}
+                <div className="w-9 h-4 shrink-0 bg-white/10 border border-white/15 rounded flex items-center justify-center">
+                  <span className="text-white text-[8px] font-medium">{params[p.key] ?? 0}</span>
+                </div>
               </div>
             ))}
           </div>

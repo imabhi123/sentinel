@@ -218,7 +218,7 @@ const SimulationCanvas = ({
 
         // Scene
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x07101e);
+        scene.background = new THREE.Color(0x0B0B0D);
         scene.fog = new THREE.FogExp2(0x07101e, 0.00032);
         sceneRef.current = scene;
 
@@ -231,7 +231,7 @@ const SimulationCanvas = ({
         scene.add(new THREE.HemisphereLight(0xffffff, 0x444444, 1.0));
 
         const makeSun = (x, y, z) => {
-            const s = new THREE.DirectionalLight(0xfff5e0, 3);
+            const s = new THREE.DirectionalLight(0xffffff, 3);
             s.position.set(x, y, z);
             s.castShadow = true;
             s.shadow.mapSize.width = s.shadow.mapSize.height = 2048;
@@ -241,24 +241,20 @@ const SimulationCanvas = ({
         makeSun(100, 300, 600); makeSun(-100, 300, -600);
         makeSun(100, 300, -600); makeSun(-100, 300, 600);
 
-        const fill = new THREE.DirectionalLight(0x4477aa, 0.4);
+        const fill = new THREE.DirectionalLight(0xffffff, 0.4);
         fill.position.set(-400, 300, -400); scene.add(fill);
-        const fillBack = new THREE.DirectionalLight(0xb8d4e8, 0.7);
+        const fillBack = new THREE.DirectionalLight(0xffffff, 0.7);
         fillBack.position.set(-500, -200, -600); scene.add(fillBack);
 
-        // Sky dome
-        const skyMat = new THREE.ShaderMaterial({
-            side: THREE.BackSide,
-            uniforms: { uRain: { value: 0.0 } },
-            vertexShader: 'varying vec3 vP;void main(){vP=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',
-            fragmentShader: 'uniform float uRain;varying vec3 vP;void main(){float t=normalize(vP).y*0.5+0.5;vec3 top=mix(vec3(0.02,0.05,0.14),vec3(0.01,0.03,0.07),uRain);vec3 bot=mix(vec3(0.06,0.18,0.36),vec3(0.03,0.08,0.18),uRain);gl_FragColor=vec4(mix(bot,top,t*t),1.0);}'
-        });
-        scene.add(new THREE.Mesh(new THREE.SphereGeometry(4000, 16, 8), skyMat));
-        skyMatRef.current = skyMat;
-
-        // Grid + Axes helpers
-        scene.add(new THREE.AxesHelper(2000));
-        scene.add(new THREE.GridHelper(2000, 20, 0x444444, 0x222222));
+        // // Sky dome
+        // const skyMat = new THREE.ShaderMaterial({
+        //     side: THREE.BackSide,
+        //     uniforms: { uRain: { value: 0.0 } },
+        //     vertexShader: 'varying vec3 vP;void main(){vP=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',
+        //     fragmentShader: 'uniform float uRain;varying vec3 vP;void main(){float t=normalize(vP).y*0.5+0.5;vec3 top=mix(vec3(0.02,0.05,0.14),vec3(0.01,0.03,0.07),uRain);vec3 bot=mix(vec3(0.06,0.18,0.36),vec3(0.03,0.08,0.18),uRain);gl_FragColor=vec4(mix(bot,top,t*t),1.0);}'
+        // });
+        // scene.add(new THREE.Mesh(new THREE.SphereGeometry(4000, 16, 8), skyMat));
+        // skyMatRef.current = skyMat;
 
         // ---- BUILD TERRAIN MESH ----
         const tVerts = new Float32Array((N + 1) * (N + 1) * 3);

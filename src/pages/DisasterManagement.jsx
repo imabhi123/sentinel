@@ -223,7 +223,7 @@ export default function DisasterManagement() {
   };
 
   return (
-    <div className="w-screen h-screen bg-[#070b14] flex flex-col text-white" style={{ fontFamily: "'Chakra Petch', sans-serif" }}>
+    <div className="w-screen h-screen bg-[#070b14] text-white relative" style={{ fontFamily: "'Chakra Petch', sans-serif" }}>
       <style>{`* { font-family: 'Chakra Petch', sans-serif; }`}</style>
 
       {/* ALERT OVERLAY */}
@@ -236,78 +236,10 @@ export default function DisasterManagement() {
         </div>
       )}
       
-      {/* HEADER BAR */}
-      <header className="h-20 flex items-center justify-between px-6 border-b border-white/5 bg-black/20">
-        <div className="flex items-center gap-6">
-          <img src={Logo} alt="Logo" className="h-8" />
-          <div className="w-px h-8 bg-white/10"></div>
-          <img src={sentinelLogo} alt="Sentinel Logo" className="h-8" />
-          <div className="ml-10 flex items-center gap-2 text-[10px] font-bold tracking-[0.2em] text-white/40 uppercase">
-            <span>Dashboard</span>
-            <span>{'>'}</span>
-            <span>Disaster Management</span>
-            {expandedModel && (
-              <>
-                <span>{'>'}</span>
-                <span className="text-white/80">{expandedModel.name}</span>
-              </>
-            )}
-          </div>
-        </div>
-
-        <div className="flex items-center gap-4">
-          <div className="bg-white/5 border border-white/10 rounded-lg px-4 py-2 flex items-center gap-4">
-            <label className="text-[10px] font-bold text-white/40 whitespace-nowrap">CENTER COORDS</label>
-            <input
-              type="text"
-              placeholder="e.g. 31.0407° N, 78.7972° E"
-              value={selectedRegion}
-              onChange={(e) => setSelectedRegion(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') handleLoadArea(); }}
-              className="bg-transparent border-b border-white/20 text-white text-xs py-1 focus:outline-none focus:border-white/40 w-64"
-            />
-            <button onClick={() => document.getElementById('inp-glb').click()}
-              className="flex-1 py-1.5 border border-white/20 rounded text-cyan-400 font-bold hover:bg-white/10 transition-colors uppercase text-[9px] tracking-widest"
-            >Upload GLB / FBX</button>
-            <input type="file" id="inp-glb" accept=".glb,.gltf,.fbx" style={{ display: 'none' }}
-              onChange={(e) => {
-                if (handleUploadModel && e.target.files[0]) {
-                  handleUploadModel(e.target.files[0]);
-                }
-                e.target.value = ''; // Reset input to allow re-uploading the same file
-              }} />
-            <button 
-              onClick={handleLoadArea}
-              disabled={loading}
-              className="px-6 py-2 bg-red-600 hover:bg-red-700 text-white text-[10px] font-bold rounded uppercase transition-colors disabled:opacity-50"
-            >
-              {loading ? 'LOADING...' : 'LOAD REGION & SIMULATE'}
-            </button>
-          </div>
-          {locationName && (
-            <span className="text-[10px] text-cyan-400 font-bold tracking-wider max-w-[200px] truncate" title={locationName}>
-              📍 {locationName}
-            </span>
-          )}
-        </div>
-      </header>
-
-      {/* MAIN CONTENT AREA */}
-      <main className="flex-1 flex overflow-hidden p-4 gap-4">
-        {/* LEFT SIDEBAR */}
-        <div className="w-80 flex flex-col h-full overflow-hidden">
-          <LeftSidebar 
-            models={disasterModels} 
-            disasterModels={disasterSpecificModels}
-            selectedModel={selectedModel} 
-            onModelClick={handleModelClick} 
-            stats={sim.stats}
-            params={simulationParams}
-          />
-        </div>
-
-        {/* CENTER VIEWPORT */}
-        <div className="flex-1 relative flex flex-col h-full overflow-hidden bg-black/40 border border-white/5 rounded-xl shadow-2xl">
+      {/* CANVAS BACKGROUND - FULL SCREEN */}
+      <div className="absolute inset-0">
+        {/* CENTER VIEWPORT - FULL SCREEN */}
+        <div className="w-full h-full relative flex flex-col overflow-hidden bg-black">
           <div className="flex-1 relative">
             {viewMode === 'GLOBE' ? (
               <GlobeView />
@@ -330,38 +262,100 @@ export default function DisasterManagement() {
               />
             )}
             
-            {viewMode === 'SIMULATION' && (
-              <button 
-                onClick={() => { sim.resetSim(); setViewMode('GLOBE'); setSatData(null); setCustomModel(null); }}
-                className="absolute top-4 left-4 z-50 px-4 py-2 bg-black/60 hover:bg-black/80 border border-white/20 rounded text-[10px] font-bold tracking-widest backdrop-blur-md transition-all active:scale-95"
-              >
-                ← BACK TO GLOBE
-              </button>
-            )}
+          
           </div>
 
           {/* BOTTOM LIVE DATA PANEL */}
           {viewMode === 'SIMULATION' && (
-            <div className="border-t border-white/10 bg-black/60 backdrop-blur-xl p-4">
+            <div className="border-t border-white/10 bg-black p-4">
               <BottomSimulation stats={sim.stats} />
             </div>
           )}
         </div>
+      </div>
 
-        {/* RIGHT PROPERTIES PANEL */}
-        {showProperties && expandedModel && (
-          <div className="w-96 flex h-full overflow-hidden">
-            <RightProperties 
-              model={expandedModel} 
-              params={simulationParams} 
-              onParamChange={handleParamChange}
-              onScenario={handleScenario}
-              onFastForward={handleFastForward}
-              stats={sim.stats}
+      {/* HEADER CONTAINER - ABSOLUTELY POSITIONED */}
+      <div className="absolute top-0 left-0 right-0 z-40 flex items-center gap-4 p-4">
+        {/* HEADER - LEFT */}
+        <div className="h-16 flex-[2.5] flex items-center gap-6 px-6 py-3 border border-white/10 bg-black rounded-xl shadow-2xl">
+          <img src={Logo} alt="Logo" className="h-8" />
+          <div className="w-px h-8 bg-white/10"></div>
+          <img src={sentinelLogo} alt="Sentinel Logo" className="h-8" />
+          <div className="flex items-center gap-2 text-[10px] font-bold tracking-[0.2em] text-white/40 uppercase ml-auto">
+            <span>Dashboard</span>
+            <span>{'>'}</span>
+            <span>Disaster Management</span>
+            {expandedModel && (
+              <>
+                <span>{'>'}</span>
+                <span className="text-white/80">{expandedModel.name}</span>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* HEADER - RIGHT */}
+        <div className="h-16 w-80 flex items-center justify-end gap-3 px-6 py-3 border border-white/10 bg-black rounded-xl shadow-2xl">
+          <div className="flex flex-col gap-1 flex-1">
+            <label className="text-[9px] text-white/60 uppercase tracking-wider">
+              SELECT A REGION
+            </label>
+            <input
+              type="text"
+              placeholder="31.0407° N, 78.7972° E"
+              value={selectedRegion}
+              onChange={(e) => setSelectedRegion(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleLoadArea(); }}
+              className="bg-transparent border border-white/20 text-white text-xs py-1 px-3 focus:outline-none focus:border-white/40 rounded"
             />
           </div>
-        )}
-      </main>
+          <input
+            type="file"
+            id="inp-glb"
+            accept=".glb,.gltf,.fbx"
+            style={{ display: 'none' }}
+            onChange={(e) => {
+              if (handleUploadModel && e.target.files[0]) {
+                handleUploadModel(e.target.files[0]);
+              }
+              e.target.value = '';
+            }}
+          />
+          <button 
+            onClick={handleLoadArea}
+            disabled={loading}
+            className="px-4 py-1.5 bg-red-600 hover:bg-red-700 text-white text-[10px] font-bold rounded uppercase transition-colors disabled:opacity-50 whitespace-nowrap h-fit"
+          >
+            {loading ? 'LOADING...' : 'SIMULATE'}
+          </button>
+        </div>
+      </div>
+
+      {/* LEFT SIDEBAR - ABSOLUTELY POSITIONED */}
+      <div className="absolute top-24 left-4 w-80 h-[calc(100vh-10rem)] z-30 overflow-hidden">
+        <LeftSidebar 
+          models={disasterModels} 
+          disasterModels={disasterSpecificModels}
+          selectedModel={selectedModel} 
+          onModelClick={handleModelClick} 
+          stats={sim.stats}
+          params={simulationParams}
+        />
+      </div>
+
+      {/* RIGHT PROPERTIES PANEL - ABSOLUTELY POSITIONED */}
+      {showProperties && expandedModel && (
+        <div className="absolute top-24 right-4 w-96 h-[calc(100vh-10rem)] z-30 overflow-hidden">
+          <RightProperties 
+            model={expandedModel} 
+            params={simulationParams} 
+            onParamChange={handleParamChange}
+            onScenario={handleScenario}
+            onFastForward={handleFastForward}
+            stats={sim.stats}
+          />
+        </div>
+      )}
     </div>
   );
 }
