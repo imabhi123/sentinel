@@ -1,4 +1,5 @@
 import React from 'react';
+import { SOIL_TYPES } from '../../hooks/useFloodSimulation';
 
 export default function RightProperties({ model, params, onParamChange, onScenario, onFastForward, stats, onUploadModel }) {
   const scenarios = [
@@ -83,10 +84,10 @@ export default function RightProperties({ model, params, onParamChange, onScenar
           <h3 className="text-[8px] font-bold mb-1.5 tracking-wider uppercase text-white/40">Parameters</h3>
           <div className="space-y-1">
             {[
-              { label: 'Rainfall (mm/hr)', key: 'rainfall', min: 0, max: 500, step: 1 },
-              { label: 'Flood Src', key: 'floodSrc', min: 0.1, max: 5, step: 0.1 },
-              { label: 'Viscosity', key: 'viscosity', min: 0.1, max: 1, step: 0.05 },
-              { label: 'Evaporation', key: 'evaporation', min: 0, max: 1, step: 0.02 },
+              { label: 'Rainfall (mm/hr)', key: 'rainfall', min: 0, max: 200, step: 1 },
+              { label: 'Upstream Inflow (m³/s)', key: 'floodSrc', min: 0, max: 50, step: 1 },
+              { label: 'Fluid Viscosity (Water→Mud)', key: 'viscosity', min: 0.3, max: 0.98, step: 0.02 },
+              { label: 'Evaporation (mm/hr)', key: 'evaporation', min: 0, max: 10, step: 0.1 },
             ].map((p) => (
               <div key={p.key} className="flex items-center gap-1 w-full min-w-0">
                 {/* Label - fixed width, left aligned */}
@@ -112,10 +113,42 @@ export default function RightProperties({ model, params, onParamChange, onScenar
 
                 {/* Value box - fixed width */}
                 <div className="w-9 h-4 shrink-0 bg-white/10 border border-white/15 rounded flex items-center justify-center">
-                  <span className="text-white text-[8px] font-medium">{params[p.key] ?? 0}</span>
+                  <span className="text-white font-bold text-[9px]">
+                    {params[p.key]?.toFixed ? parseFloat(params[p.key].toFixed(2)) : params[p.key] ?? 0}
+                  </span>
                 </div>
               </div>
             ))}
+
+            {/* Soil Type Dropdown */}
+            <div className="flex flex-col gap-1.5">
+              <div className="flex justify-between items-center">
+                <span className="text-white/60 text-[10px] font-bold uppercase">Soil Type</span>
+                <span className="text-cyan-400 font-bold text-[9px] uppercase tracking-wide">
+                  {SOIL_TYPES[params.soilType]?.label?.split(' ')[0] || 'Loam'}
+                </span>
+              </div>
+              <select
+                value={params.soilType || 'loam'}
+                onChange={(e) => onParamChange('soilType', e.target.value)}
+                className="w-full bg-white/5 border border-white/20 rounded px-2 py-1.5 text-white text-[10px] font-bold focus:outline-none focus:border-cyan-500 cursor-pointer appearance-none"
+                style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'12\' height=\'12\' viewBox=\'0 0 12 12\'%3E%3Cpath fill=\'%23888\' d=\'M6 8L1 3h10z\'/%3E%3C/svg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right 8px center' }}
+              >
+                {Object.entries(SOIL_TYPES).map(([key, soil]) => (
+                  <option key={key} value={key} style={{ background: '#111', color: '#fff' }}>
+                    {soil.label}
+                  </option>
+                ))}
+              </select>
+              <div className="text-white/25 text-[8px] leading-tight">
+                {params.soilType && SOIL_TYPES[params.soilType] && (
+                  <>
+                    f₀={SOIL_TYPES[params.soilType].f0} mm/hr →
+                    f꜀={SOIL_TYPES[params.soilType].fc} mm/hr (Horton)
+                  </>
+                )}
+              </div>
+            </div>
           </div>
         </div>
 

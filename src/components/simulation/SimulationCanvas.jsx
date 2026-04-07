@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useCallback } from 'react';
+import React, { useRef, useEffect, useCallback, useState, forwardRef, useImperativeHandle } from 'react';
 import * as THREE from 'three';
 import { N, CELLS, WORLD, CELL, TMAX } from '../../hooks/useFloodSimulation';
 
@@ -9,10 +9,10 @@ import { N, CELLS, WORLD, CELL, TMAX } from '../../hooks/useFloodSimulation';
 //  advanced shaders (fresnel, foam, specular for water).
 // ================================================================
 
-const SimulationCanvas = ({
+const SimulationCanvas = forwardRef(({
     terrainH, groundH, waterH, velX, velZ,
     simRunning, simPhase, tick, updateStats, stats, config, satData, terrainVersion, customModel
-}) => {
+}, ref) => {
     const containerRef = useRef(null);
     const sceneRef = useRef(null);
     const rendererRef = useRef(null);
@@ -30,12 +30,25 @@ const SimulationCanvas = ({
         configRef.current = config;
     }, [config]);
 
+    // Hover tooltip state
+    const [tooltip, setTooltip] = useState({ show: false, x: 0, y: 0, elev: 0, depth: 0 });
+    const raycasterRef = useRef(new THREE.Raycaster());
+    const mouseNDC = useRef(new THREE.Vector2(0, 0));
+    const mouseClient = useRef({ x: 0, y: 0 });
+    const mouseMoved = useRef(false);
+
     // Camera state
     const camRef = useRef({
         th: 0.55, ph: 0.38, dist: 1800,
         tgt: new THREE.Vector3(0, 30, 0),
         isDrag: false, lastMX: 0, lastMY: 0,
     });
+
+    // Camera animation state for focusAoi
+    const camAnimRef = useRef(null);
+
+    // AOI Outline Polygon
+    const aoiLineRef = useRef(null);
 
     // CPU-owned geometry arrays (double-buffer approach from original)
     const _wPos = useRef(new Float32Array((N + 1) * (N + 1) * 3));
@@ -219,7 +232,7 @@ const SimulationCanvas = ({
         // Scene
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x0B0B0D);
-        scene.fog = new THREE.FogExp2(0x07101e, 0.00032);
+        scene.fog = new THREE.FogExp2(0x0B0B0D, 0.00032);
         sceneRef.current = scene;
 
         // Camera
@@ -503,6 +516,21 @@ const SimulationCanvas = ({
             const dt = Math.min((now - lastT) / 1000, 0.05);
             lastT = now;
 
+            // Camera Animation (focusAoi)
+            if (camAnimRef.current) {
+                const anim = camAnimRef.current;
+                const progress = Math.min(1, (performance.now() - anim.t0) / anim.dur);
+                const ease = progress < 0.5 ? 2 * progress * progress : -1 + (4 - 2 * progress) * progress;
+                camRef.current.tgt.x = anim.from.x + (anim.to.x - anim.from.x) * ease;
+                camRef.current.tgt.y = anim.from.y + (anim.to.y - anim.from.y) * ease;
+                camRef.current.tgt.z = anim.from.z + (anim.to.z - anim.from.z) * ease;
+                camRef.current.dist = anim.from.dist + (anim.to.dist - anim.from.dist) * ease;
+                updateCam();
+                if (progress >= 1) {
+                    camAnimRef.current = null;
+                }
+            }
+
             // Spawn rain when sim starts
             if (simRunning?.current && !hasSpawnedRain) {
                 spawnRain(500);  // allocate max buffer (100k particles)
@@ -557,6 +585,36 @@ const SimulationCanvas = ({
 
             // Rain particles
             if (rainMeshRef.current) updateRain3D(dt);
+
+            // Hover tooltip raycasting
+            if (terrainMeshRef.current && mouseMoved.current) {
+                const rc = raycasterRef.current;
+                rc.setFromCamera(mouseNDC.current, camera);
+                const target = terrainMeshRef.current;
+                const hits = rc.intersectObject(target, true);
+                if (hits.length > 0) {
+                    const p = hits[0].point;
+                    const gx = Math.floor((p.x + WORLD / 2) / CELL);
+                    const gz = Math.floor((p.z + WORLD / 2) / CELL);
+                    if (gx >= 0 && gx < N && gz >= 0 && gz < N) {
+                        const idx = gz * N + gx;
+                        const elev = groundH ? groundH[idx] : 0;
+                        const depth = waterH ? waterH[idx] : 0;
+                        setTooltip({
+                            show: true,
+                            x: mouseClient.current.x + 15,
+                            y: mouseClient.current.y + 15,
+                            elev: elev,
+                            depth: depth
+                        });
+                    } else {
+                        setTooltip(prev => prev.show ? { ...prev, show: false } : prev);
+                    }
+                } else {
+                    setTooltip(prev => prev.show ? { ...prev, show: false } : prev);
+                }
+                mouseMoved.current = false;
+            }
 
             // Stats (throttled)
             statsTimer.current += dt;
@@ -657,7 +715,155 @@ const SimulationCanvas = ({
         };
     }, [customModel]);
 
-    return <div ref={containerRef} className="w-full h-full overflow-hidden" style={{ cursor: 'grab' }} />;
-};
+    // Mouse tracking for tooltip
+    useEffect(() => {
+        const container = containerRef.current;
+        if (!container) return;
+        const onMouseMoveTooltip = (e) => {
+            const rect = container.getBoundingClientRect();
+            mouseNDC.current.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+            mouseNDC.current.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+            mouseClient.current.x = e.clientX;
+            mouseClient.current.y = e.clientY;
+            mouseMoved.current = true;
+        };
+        const onMouseLeaveTooltip = () => {
+            setTooltip(prev => prev.show ? { ...prev, show: false } : prev);
+        };
+        container.addEventListener('mousemove', onMouseMoveTooltip);
+        container.addEventListener('mouseleave', onMouseLeaveTooltip);
+        return () => {
+            container.removeEventListener('mousemove', onMouseMoveTooltip);
+            container.removeEventListener('mouseleave', onMouseLeaveTooltip);
+        };
+    }, []);
+
+    // Expose API methods to parent (e.g. DisasterManagement, LeftSidebar)
+    useImperativeHandle(ref, () => ({
+        focusAoi: (rect) => {
+            const clamp01 = (v) => Math.max(0, Math.min(1, v));
+            const x0 = clamp01(rect.x0), x1 = clamp01(rect.x1);
+            const y0 = clamp01(rect.y0), y1 = clamp01(rect.y1);
+            const cx = (x0 + x1) * 0.5 * WORLD - WORLD * 0.5;
+            const cz = (y0 + y1) * 0.5 * WORLD - WORLD * 0.5;
+            const size = Math.max((x1 - x0) * WORLD, (y1 - y0) * WORLD);
+            const targetDist = Math.max(140, Math.min(2600, size * 1.65));
+            camAnimRef.current = {
+                t0: performance.now(),
+                dur: 750,
+                from: { 
+                    x: camRef.current.tgt.x, y: camRef.current.tgt.y, z: camRef.current.tgt.z, 
+                    dist: camRef.current.dist 
+                },
+                to: { 
+                    x: cx, y: 30, z: cz, 
+                    dist: targetDist 
+                }
+            };
+            
+            // Generate AOI 3D Polygon Outline
+            const scene = sceneRef.current;
+            if (!scene) return;
+            if (aoiLineRef.current) {
+                scene.remove(aoiLineRef.current);
+                aoiLineRef.current.geometry.dispose();
+                aoiLineRef.current.material.dispose();
+                aoiLineRef.current = null;
+            }
+            if (!terrainH || terrainH.length === 0) return;
+            
+            const wx0 = x0 * WORLD - WORLD * 0.5;
+            const wx1 = x1 * WORLD - WORLD * 0.5;
+            const wz0 = y0 * WORLD - WORLD * 0.5;
+            const wz1 = y1 * WORLD - WORLD * 0.5;
+            
+            const getHeight = (wx, wz) => {
+                const gx = Math.max(0, Math.min(N - 1, Math.round((wx + WORLD * 0.5) / CELL)));
+                const gz = Math.max(0, Math.min(N - 1, Math.round((wz + WORLD * 0.5) / CELL)));
+                return terrainH[gz * N + gx] || 0;
+            };
+            
+            const hOffset = 1.5;
+            const y00 = getHeight(wx0, wz0) + hOffset;
+            const y10 = getHeight(wx1, wz0) + hOffset;
+            const y11 = getHeight(wx1, wz1) + hOffset;
+            const y01 = getHeight(wx0, wz1) + hOffset;
+            
+            const pts = [
+                wx0, y00, wz0,
+                wx1, y10, wz0,
+                wx1, y11, wz1,
+                wx0, y01, wz1
+            ];
+            
+            const geom = new THREE.BufferGeometry();
+            geom.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
+            geom.setIndex([0, 1, 2, 3, 0]);
+            const mat = new THREE.LineBasicMaterial({ color: 0x00d4ff, linewidth: 3 });
+            
+            const line = new THREE.LineLoop(geom, mat);
+            line.renderOrder = 1000;
+            line.material.depthTest = false;
+            line.material.transparent = true;
+            scene.add(line);
+            
+            // Add a subtle fill plane over the terrain block just like the minimap
+            const hFill = hOffset - 0.5;
+            const fillPts = [
+                wx0, getHeight(wx0, wz0) + hFill, wz0,
+                wx1, getHeight(wx1, wz0) + hFill, wz0,
+                wx1, getHeight(wx1, wz1) + hFill, wz1,
+                wx0, getHeight(wx0, wz1) + hFill, wz1
+            ];
+            const fillGeom = new THREE.BufferGeometry();
+            fillGeom.setAttribute('position', new THREE.Float32BufferAttribute(fillPts, 3));
+            fillGeom.setIndex([0, 2, 1, 0, 3, 2]);
+            const fillMat = new THREE.MeshBasicMaterial({ 
+                color: 0x00d4ff, 
+                transparent: true, 
+                opacity: 0.15,
+                depthTest: false,
+                side: THREE.DoubleSide
+            });
+            const fillPlane = new THREE.Mesh(fillGeom, fillMat);
+            fillPlane.renderOrder = 999;
+            line.add(fillPlane); // Add as child so it cleans up together
+            
+            aoiLineRef.current = line;
+        }
+    }));
+
+    return (
+        <div ref={containerRef} className="w-full h-full overflow-hidden relative" style={{ cursor: 'grab' }}>
+            {tooltip.show && (
+                <div style={{
+                    position: 'fixed',
+                    left: tooltip.x,
+                    top: tooltip.y,
+                    pointerEvents: 'none',
+                    zIndex: 9999,
+                    background: 'rgba(0,0,0,0.85)',
+                    border: '1px solid rgba(0,255,255,0.3)',
+                    borderRadius: 6,
+                    padding: '6px 10px',
+                    fontFamily: 'monospace',
+                    fontSize: 11,
+                    color: '#fff',
+                    backdropFilter: 'blur(4px)',
+                    minWidth: 130,
+                }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, marginBottom: 2 }}>
+                        <span style={{ color: '#888', fontSize: 9, textTransform: 'uppercase', letterSpacing: 1 }}>Elevation</span>
+                        <span style={{ color: '#4fd1c5', fontWeight: 'bold' }}>{tooltip.elev.toFixed(2)} m</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12 }}>
+                        <span style={{ color: '#888', fontSize: 9, textTransform: 'uppercase', letterSpacing: 1 }}>Water Depth</span>
+                        <span style={{ color: tooltip.depth > 0.5 ? '#ff6b6b' : tooltip.depth > 0.05 ? '#63b3ed' : '#a0aec0', fontWeight: 'bold' }}>{tooltip.depth.toFixed(2)} m</span>
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+});
 
 export default SimulationCanvas;

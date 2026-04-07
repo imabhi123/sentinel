@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import '@fontsource/chakra-petch';
 import Logo from '../assets/Logo.svg';
@@ -9,7 +9,7 @@ import BottomSimulation from '../components/layout/BottomSimulation';
 
 import GlobeView from '../components/simulation/GlobeView';
 import SimulationCanvas from '../components/simulation/SimulationCanvas';
-import { useFloodSimulation } from '../hooks/useFloodSimulation';
+import { useFloodSimulation, SOIL_TYPES } from '../hooks/useFloodSimulation';
 import {
   fetchDEM, fetchElevation, fetchBuildings, fetchGeocode,
   loadSatelliteTexture, mercatorYFromLat,
@@ -21,6 +21,7 @@ import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
 
 export default function DisasterManagement() {
   const navigate = useNavigate();
+  const canvasRef = useRef(null);
   const [selectedModel, setSelectedModel] = useState(null);
   const [expandedModel, setExpandedModel] = useState(null);
   const [showProperties, setShowProperties] = useState(false);
@@ -41,8 +42,9 @@ export default function DisasterManagement() {
   const [simulationParams, setSimulationParams] = useState({
     rainfall: 80,
     floodSrc: 1.0,
-    viscosity: 0.65,
+    viscosity: 0.98,
     evaporation: 0.08,
+    soilType: 'loam',
     waterAlpha: 0.75,
     forestCanopy: 18,
     buildingLift: 14,
@@ -245,6 +247,7 @@ export default function DisasterManagement() {
               <GlobeView />
             ) : (
               <SimulationCanvas
+                ref={canvasRef}
                 terrainH={sim.terrainH}
                 groundH={sim.groundH}
                 waterH={sim.waterH}
@@ -340,6 +343,9 @@ export default function DisasterManagement() {
           onModelClick={handleModelClick} 
           stats={sim.stats}
           params={simulationParams}
+          satData={satData}
+          customModel={customModel}
+          onSelectAoi={(rect) => canvasRef.current?.focusAoi(rect)}
         />
       </div>
 

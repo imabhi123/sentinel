@@ -13,13 +13,21 @@ const CELLS = N * N;
 const WORLD = 2000;
 const CELL = WORLD / N;
 const DT = 0.14;
-const G = 9.81;
+const G = 30.0;
 const TMAX = 180;
 const MANNING = 0.035;
 const VALLEY_ASSIST = 0.24;
 const RAIN_DUR = 40;
 
 export { N, CELLS, WORLD, CELL, TMAX };
+
+export const SOIL_TYPES = {
+    concrete: { label: 'Concrete / Impervious', fc: 0, f0: 0, k: 0 },
+    clay: { label: 'Dense Clay (Group D)', fc: 2, f0: 15, k: 2 },
+    clay_loam: { label: 'Clay Loam (Group C)', fc: 8, f0: 35, k: 2 },
+    loam: { label: 'Loam (Group B)', fc: 15, f0: 70, k: 2 },
+    sand: { label: 'Sand / Gravel (Group A)', fc: 25, f0: 120, k: 2 }
+};
 
 export const useFloodSimulation = () => {
     // ---- Simulation arrays (identical to original) ----
@@ -35,6 +43,9 @@ export const useFloodSimulation = () => {
     const drainDirX = useRef(new Float32Array(CELLS));
     const drainDirZ = useRef(new Float32Array(CELLS));
     const drainSlope = useRef(new Float32Array(CELLS));
+    
+    // Tracks independent physical saturation time (in seconds) for Horton infiltration mechanics per square meter block
+    const soilSatTime = useRef(new Float32Array(CELLS));
 
     // ---- State ----
     const simRunning   = useRef(false);
@@ -45,12 +56,15 @@ export const useFloodSimulation = () => {
     const floodSources = useRef([]);
     const isFastForwarding = useRef(false);
     const targetSimTime    = useRef(0);
+    const ffStartRealTime  = useRef(0);
+    const ffStartSimTime   = useRef(0);
 
     // ---- Params (mutable refs for physics loop) ----
     const rainRate    = useRef(80);
     const floodStr    = useRef(1.0);
     const viscosity   = useRef(0.65);
     const evaporation = useRef(0.08);
+    const soilType    = useRef('loam');
 
     // ---- React stats for UI ----
     const [stats, setStats] = useState({
@@ -272,19 +286,34 @@ export const useFloodSimulation = () => {
     const simStep = useCallback((dtOverride) => {
         const dStep = dtOverride || DT;
         const dx = CELL;
+
+        // Derived constants from current params — read directly from local refs
         const dampBase = Math.max(0.3, Math.min(0.98, viscosity.current));
         const damp = Math.pow(dampBase, dStep / DT);
-        const evap = evaporation.current * 0.000008;
-        const n2 = MANNING * MANNING, cfl = 0.45;
-        const eps = 1e-4;
-        const tH = terrainH.current, wH = waterH.current, vX = velX.current, vZ = velZ.current;
+        const n2 = MANNING * MANNING, cfl = 0.75;
+        const eps = 1e-6;
+
+        // Hydrological time scale multiplier. 
+        // Water dynamics (gravity, slope) occur in real-time dStep to avoid physics explosion (CFL condition).
+        // But slow environmental effects (Rain, Evaporation, Infiltration) are amplified so they are visible.
+        // Doing this globally guarantees that Rain perfectly proportions against Soil Infiltration.
+        const HYDRO_MULT = 8.0; 
+        const hydroDt = dStep * HYDRO_MULT; // The "effective" seconds of weather that pass this frame
+
+        // Convert rates from mm/hr to meters per second directly
+        const rain_m_s = (rainRate.current) / (1000 * 3600);
+        const evap_m_s = (evaporation.current) / (1000 * 3600); 
+
+        const tH = terrainH.current, gH = groundH.current;
+        const wH = waterH.current, vX = velX.current, vZ = velZ.current;
         const bM = buildingMask.current;
         const ddX = drainDirX.current, ddZ = drainDirZ.current, dS = drainSlope.current;
         const wN = wHnew.current, xN = vXnew.current, zN = vZnew.current;
+        const soilSat = soilSatTime.current;
 
         // Rain accumulation
         if (simPhase.current === 'rain' || simPhase.current === 'flood') {
-            const add = (rainRate.current / 1000) * dStep * 0.0022;
+            const add = rain_m_s * hydroDt;
             for (let i = 0; i < CELLS; i++) {
                 if (bM[i]) continue;
                 wH[i] += add;
@@ -329,22 +358,21 @@ export const useFloodSimulation = () => {
                 const Gx = -TL + TR - 2 * ML + 2 * MR - BL + BR;
                 const Gz = -TL - 2 * TC - TR + BL + 2 * BC + BR;
                 const inv8dx = 1 / (8 * dx);
+                
+                // Pure gravitational acceleration driven EXACTLY by absolute hydraulic surface gradient
                 let ax_g = -G * Gx * inv8dx;
                 let az_g = -G * Gz * inv8dx;
-
-                // D8 valley assist (fades with depth)
-                const shallow = Math.exp(-h * 3.2);
-                ax_g += VALLEY_ASSIST * G * dS[idx] * ddX[idx] * shallow;
-                az_g += VALLEY_ASSIST * G * dS[idx] * ddZ[idx] * shallow;
 
                 let vx = vX[idx] * damp + ax_g * dStep;
                 let vz = vZ[idx] * damp + az_g * dStep;
 
-                // Semi-implicit Manning friction
+                // Semi-implicit Manning friction (smoothed to prevent singularity on thin films)
                 const speed = Math.sqrt(vx * vx + vz * vz);
-                if (speed > 1e-4 && h > 0.002) {
-                    const R = Math.pow(h, 0.66667);
-                    const fCoeff = (G * n2 * speed / Math.max(1e-6, R)) * dStep;
+                if (speed > 1e-4) {
+                    // Cap depth at 1mm minimum for friction equation to prevent infinite sticking force
+                    const effectiveH = Math.max(0.001, h); 
+                    const R = Math.pow(effectiveH, 0.66667);
+                    const fCoeff = (G * n2 * speed / R) * dStep;
                     vx /= (1 + fCoeff);
                     vz /= (1 + fCoeff);
                 }
@@ -389,9 +417,31 @@ export const useFloodSimulation = () => {
             }
         }
 
-        // Evaporation + safety clamp + boundary clear
+        // Infiltration (Horton's model) + Evaporation + safety clamp + boundary clear
+        // Pre-compute the per-cell Horton rate based on the AVERAGE scene saturation time
+        // This avoids calling Math.exp() 40,000 times per frame (which freezes the browser)
+        const sParams = SOIL_TYPES[soilType.current] || SOIL_TYPES.loam;
+        
+        // Use a single "global" saturation time for performance (tracks total sim time wet)
+        // Each cell still individually tracks soilSat[i] for precision in the long run
+        const inf_m_s_max = sParams.f0 / (1000 * 3600); // most absorptive (dry soil)
+        const inf_m_s_min = sParams.fc / (1000 * 3600); // least absorptive (saturated soil)
+        
         for (let i = 0; i < CELLS; i++) {
-            let hn = wN[i] - evap;
+            let hn = wN[i];
+            
+            // Advance cell saturation clock if wet, then interpolate Horton curve
+            if (hn > 0.001) {
+                soilSat[i] += hydroDt; // tracks simulation seconds, not real-time integration
+                // Map saturation time to [0,1] over a 4-hour window, then lerp infiltration rate
+                const satFrac = Math.min(1, soilSat[i] / (4 * 3600));
+                const inf_m_s = inf_m_s_max + (inf_m_s_min - inf_m_s_max) * satFrac;
+                hn -= (inf_m_s * hydroDt);
+                if (hn < 0) hn = 0;
+            }
+            
+            // Apply standard static evaporation
+            hn -= (evap_m_s * hydroDt);
             if (hn < 0) hn = 0;
             if (hn > 1000) hn = 1000;
             if (!Number.isFinite(hn)) hn = 0;
@@ -436,9 +486,12 @@ export const useFloodSimulation = () => {
         phaseTimer.current = 0;
         isFastForwarding.current = false;
         targetSimTime.current = 0;
+        ffStartRealTime.current = 0;
+        ffStartSimTime.current = 0;
         waterH.current.fill(0);
         velX.current.fill(0);
         velZ.current.fill(0);
+        soilSatTime.current.fill(0); // clear memory of ground saturation
         floodSources.current = [];
         floodDone.current = false;
         setStats({ time: '00:00', phase: 'IDLE', rain: 0, cells: 0, depth: 0, area: 0, fps: 0 });
@@ -483,7 +536,10 @@ export const useFloodSimulation = () => {
 
     const fastForward = useCallback((mins) => {
         if (!simRunning.current) return;
-        targetSimTime.current = simTime.current + mins * 60;
+        const baseSimTime = isFastForwarding.current ? targetSimTime.current : simTime.current;
+        targetSimTime.current = baseSimTime + mins * 60;
+        ffStartRealTime.current = performance.now();
+        ffStartSimTime.current = simTime.current;
         isFastForwarding.current = true;
     }, []);
 
@@ -501,16 +557,25 @@ export const useFloodSimulation = () => {
         }
 
         if (isFastForwarding.current) {
+            const elapsedReal = performance.now() - ffStartRealTime.current;
+            const ffDurationRealMs = 60000; // 1 minute exactly
+            
+            let currentFrameTargetSim = ffStartSimTime.current;
+            if (elapsedReal >= ffDurationRealMs) {
+                currentFrameTargetSim = targetSimTime.current;
+                isFastForwarding.current = false;
+            } else {
+                const fraction = elapsedReal / ffDurationRealMs;
+                currentFrameTargetSim += fraction * (targetSimTime.current - ffStartSimTime.current);
+            }
+
             let ffBatch = 0;
             const tStart = performance.now();
-            while (simTime.current < targetSimTime.current && ffBatch < 200) {
+            while (simTime.current < currentFrameTargetSim && ffBatch < 400) {
                 simStep(DT);
                 simTime.current += DT;
                 ffBatch++;
-                if (performance.now() - tStart > 15) break;
-            }
-            if (simTime.current >= targetSimTime.current) {
-                isFastForwarding.current = false;
+                if (performance.now() - tStart > 20) break;
             }
         } else {
             simStep(DT);
@@ -557,6 +622,7 @@ export const useFloodSimulation = () => {
                 break;
             case 'viscosity': viscosity.current = value; break;
             case 'evaporation': evaporation.current = value; break;
+            case 'soilType': soilType.current = value; break;
             default: break;
         }
     }, []);

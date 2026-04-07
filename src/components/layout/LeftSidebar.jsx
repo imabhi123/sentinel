@@ -1,8 +1,25 @@
-export default function LeftSidebar({ models, selectedModel, onModelClick, disasterModels, stats, params }) {
+import AoiMinimap from '../simulation/AoiMinimap';
+
+export default function LeftSidebar({ models, selectedModel, onModelClick, disasterModels, stats, params, satData, customModel, onSelectAoi }) {
+  const liveData = {
+    location: "NH34, Dharali, Bhatwari, Uttarkashi, Uttarkhand, India",
+    time: stats?.time || "00:00",
+    phase: stats?.phase || "IDLE",
+    rainfall: (stats?.rain || 0).toFixed(2) + " mm/hr",
+    wetCells: (stats?.cells || 0).toLocaleString(),
+    maxDepth: (stats?.depth || 0).toFixed(2) + " m",
+    floodArea: (stats?.area || 0) > 1e6 ? `${((stats?.area || 0) / 1e6).toFixed(2)} km²` : `${(stats?.area || 0).toFixed(0)} m²`,
+    fps: stats?.fps || 0,
+    floodCoverage: Math.min(((stats?.cells || 0) / 40000) * 100, 100).toFixed(1) + "%",
+  };
   const isLiveDataMode = selectedModel?.liveDataMode === true;
 
   return (
-    <div className="w-full h-full bg-black border border-white/10 rounded-xl p-5 flex flex-col shadow-2xl overflow-hidden">
+    <div className="w-full h-full bg-black border border-white/10 rounded-xl p-5 flex flex-col shadow-2xl overflow-y-auto scrollbar-hide">
+      <style>{`
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+      `}</style>
 
       {!selectedModel ? (
         <>
@@ -73,7 +90,7 @@ export default function LeftSidebar({ models, selectedModel, onModelClick, disas
            <div className="mb-3 text-left">
   <p className="text-white/60 text-xs font-semibold mb-1">Location</p>
   <p className="text-white text-xs leading-relaxed">
-    NH34, Dharali, Bhatwari, Uttarkashi, Uttarkhand, India
+    {liveData.location}
   </p>
 </div>
 
@@ -81,19 +98,19 @@ export default function LeftSidebar({ models, selectedModel, onModelClick, disas
 
             {/* Data rows */}
             {[
-              { label: "Time",           value: "00:00",        color: "text-white" },
-              { label: "Phase",          value: "IDLE",         color: "text-green-400 font-bold" },
-              { label: "Rainfall",       value: "00.00 mm/hr",  color: "text-white" },
-              { label: "Wet Cells",      value: "39,176",       color: "text-white" },
-              { label: "Max Depth",      value: "00.00 m",      color: "text-yellow-400 font-bold" },
-              { label: "Flood Area",     value: "0 km²",        color: "text-white" },
-              { label: "FPS",            value: "4",            color: "text-red-500 font-bold" },
-              { label: "Flood Coverage", value: "—",            color: "text-white" },
+              { label: 'Time', value: liveData.time, color: 'text-white' },
+              { label: 'Phase', value: liveData.phase, color: liveData.phase === 'IDLE' ? 'text-green-400 font-bold' : liveData.phase === 'RAIN' ? 'text-blue-400 font-bold' : 'text-red-400 font-bold' },
+              { label: 'Rainfall', value: liveData.rainfall, color: 'text-white' },
+              { label: 'Wet Cells', value: liveData.wetCells, color: 'text-white' },
+              { label: 'Max Depth', value: liveData.maxDepth, color: 'text-yellow-400 font-bold' },
+              { label: 'Flood Area', value: liveData.floodArea, color: 'text-white' },
+              { label: 'FPS', value: liveData.fps, color: 'text-red-500 font-bold' },
+              { label: 'Flood Coverage', value: liveData.floodCoverage, color: 'text-white' },
             ].map((row, i) => (
               <div key={i}>
                 <div className="flex items-center justify-between py-[10px]">
                   <p className="text-white/60 text-xs font-semibold">{row.label}</p>
-                  <p className={`text-xs ${row.color}`}>{row.value}</p>
+                  <p className={`text-xs ${row.color || 'text-white'}`}>{row.value}</p>
                 </div>
                 <div className="border-t border-white/10" />
               </div>
@@ -101,12 +118,12 @@ export default function LeftSidebar({ models, selectedModel, onModelClick, disas
           </div>
 
           {/* AOI PREVIEW CARD */}
-          <div className="bg-white/5 border border-white/10 rounded-xl p-4 flex-1 flex flex-col min-h-0">
+          <div className="bg-white/5 border border-white/10 rounded-xl p-4 shrink-0 flex flex-col">
             <p className="text-white text-xs font-bold tracking-wider mb-3 shrink-0">
               AOI PREVIEW <span className="text-white/50">(2KM)</span>
             </p>
-            <div className="flex-1 bg-gray-800/60 border border-white/10 rounded-lg flex items-end justify-start p-3 min-h-0">
-              <span className="text-white/40 text-xs">Drag to select area→ auto-zoom</span>
+            <div className="border border-white/10 rounded-lg overflow-hidden relative">
+              <AoiMinimap satData={satData} customModel={customModel} onSelectArea={onSelectAoi} />
             </div>
           </div>
         </>
