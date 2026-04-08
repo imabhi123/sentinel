@@ -280,9 +280,9 @@ export default function DisasterManagement() {
       {/* HEADER CONTAINER - ABSOLUTELY POSITIONED */}
       <div className="absolute top-0 left-0 right-0 z-40 flex items-center gap-4 p-4">
         {/* HEADER - LEFT */}
-        <div className="h-16 flex-[2.5] flex items-center gap-6 px-6 py-3 border border-white/10 bg-black rounded-xl shadow-2xl">
+        <div className="h-16 flex-[2.5] flex items-center gap-6 px-6 py-3 border border-[#282828] bg-[#06060B] rounded-xl shadow-2xl">
           <img src={Logo} alt="Logo" className="h-8" />
-          <div className="w-px h-8 bg-white/10"></div>
+          <div className="w-px h-8 bg-[#585858]"></div>
           <img src={sentinelLogo} alt="Sentinel Logo" className="h-8" />
           <div className="flex items-center gap-2 text-[10px] font-bold tracking-[0.2em] text-white/40 uppercase ml-auto">
             <span>Dashboard</span>
@@ -298,40 +298,36 @@ export default function DisasterManagement() {
         </div>
 
         {/* HEADER - RIGHT */}
-        <div className="h-16 w-80 flex items-center justify-end gap-3 px-6 py-3 border border-white/10 bg-black rounded-xl shadow-2xl">
-          <div className="flex flex-col gap-1 flex-1">
-            <label className="text-[9px] text-white/60 uppercase tracking-wider">
-              SELECT A REGION
-            </label>
-            <input
-              type="text"
-              placeholder="31.0407° N, 78.7972° E"
-              value={selectedRegion}
-              onChange={(e) => setSelectedRegion(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') handleLoadArea(); }}
-              className="bg-transparent border border-white/20 text-white text-xs py-1 px-3 focus:outline-none focus:border-white/40 rounded"
-            />
-          </div>
-          <input
-            type="file"
-            id="inp-glb"
-            accept=".glb,.gltf,.fbx"
-            style={{ display: 'none' }}
-            onChange={(e) => {
-              if (handleUploadModel && e.target.files[0]) {
-                handleUploadModel(e.target.files[0]);
-              }
-              e.target.value = '';
-            }}
-          />
-          <button 
-            onClick={handleLoadArea}
-            disabled={loading}
-            className="px-4 py-1.5 bg-red-600 hover:bg-red-700 text-white text-[10px] font-bold rounded uppercase transition-colors disabled:opacity-50 whitespace-nowrap h-fit"
-          >
-            {loading ? 'LOADING...' : 'SIMULATE'}
-          </button>
-        </div>
+      <div className="w-80 flex flex-col  px-2 py-2 border border-[#282828] bg-[#06060B] rounded-xl shadow-2xl">
+  
+  {/* Label */}
+  <label className="text-[13px] text-[#B5B5B5] uppercase tracking-wider text-left">
+    SELECT A REGION
+  </label>
+
+  {/* Input + Button */}
+  <div className="flex items-center gap-2">
+    
+    <input
+      type="text"
+      placeholder="31.0407° N, 78.7972° E"
+      value={selectedRegion}
+      onChange={(e) => setSelectedRegion(e.target.value)}
+      onKeyDown={(e) => { if (e.key === 'Enter') handleLoadArea(); }}
+      className="flex-1  bg-[#18181A] border border-[#6C6C6C] text-white text-[10px] py-1 px-2 rounded focus:outline-none focus:border-white/40 h-6"
+    />
+
+    <button 
+      onClick={handleLoadArea}
+      disabled={loading}
+      className="px-3 h-6 bg-[#EE2B2A] text-white text-[10px] font-semibold rounded uppercase transition-colors disabled:opacity-50 whitespace-nowrap flex items-center justify-center"
+    >
+      {loading ? 'LOADING...' : 'SIMULATE'}
+    </button>
+
+  </div>
+
+</div>
       </div>
 
       {/* LEFT SIDEBAR - ABSOLUTELY POSITIONED */}

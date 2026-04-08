@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { SOIL_TYPES } from '../../hooks/useFloodSimulation';
+import minimizeIcon from '../../assets/minimize.svg';
 
 export default function RightProperties({ model, params, onParamChange, onScenario, onFastForward, stats, onUploadModel }) {
+  const [isMinimized, setIsMinimized] = useState(false);
   const scenarios = [
     { label: '[ START RAIN ]', id: 'startRain' },
     { label: '[ TRIGGER FLOOD ]', id: 'triggerFlood' },
@@ -20,26 +22,28 @@ export default function RightProperties({ model, params, onParamChange, onScenar
   const phaseGlow = stats?.phase === 'FLOOD' ? 'bg-red-500' : stats?.phase === 'RAIN' ? 'bg-blue-500' : 'bg-green-500';
 
   return (
-    <div className="w-80 h-full ml-auto bg-black border border-white/10 rounded-xl p-5 overflow-y-auto scrollbar-hide flex flex-col shadow-2xl">
+    <div className={`${isMinimized ? 'h-16' : 'h-full'} w-[365px] ml-auto bg-[#06060B] border border-white/10 rounded-xl p-5 scrollbar-hide flex flex-col shadow-2xl transition-all duration-300`}>
       <style>{`
         .scrollbar-hide::-webkit-scrollbar { display: none; }
         .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
       `}</style>
 
       {/* HEADER */}
-      <div className="mb-4 flex items-center justify-between pb-3 border-b border-white/10">
-        <h2 className="text-white text-sm font-bold tracking-[0.2em] uppercase">Simulation</h2>
-        <div className="flex items-center gap-2">
-          <div className={`w-2 h-2 rounded-full ${phaseGlow} animate-pulse`} />
-          <span className={`text-[10px] font-bold tracking-wider uppercase ${phaseColor}`}>{stats?.phase || 'IDLE'}</span>
-        </div>
+      <div className="flex items-center justify-between pb-1 mb-3">
+        <h2 className="text-white text-[13px] font-bold tracking-[0.2em] uppercase text-left" style={{ fontFamily: 'Chakra Petch, sans-serif' }}>Simulation</h2>
+        <button onClick={() => setIsMinimized(!isMinimized)}
+          className="flex-shrink-0 hover:opacity-80 transition-opacity"
+          title={isMinimized ? 'Expand' : 'Minimize'}
+        >
+          <img src={minimizeIcon} alt={isMinimized ? 'Expand' : 'Minimize'} className="w-4 h-4" />
+        </button>
       </div>
 
-      <div className="space-y-4 flex-1">
+      <div className="space-y-4 flex-1 overflow-y-auto scrollbar-hide">
         {/* LIVE DATA */}
         <div className="bg-white/5 border border-white/10 rounded-lg p-3">
-          <h3 className="text-[10px] font-bold mb-3 tracking-wider uppercase text-cyan-400/60">Live Data</h3>
-          <div className="space-y-1 text-[11px]">
+          <h3 className="text-[10px] font-bold tracking-wider uppercase text-white/40 text-left">Live Data</h3>
+          <div className="text-[11px]">
             {[
               { label: 'Time', value: stats?.time || '00:00' },
               { label: 'Rainfall', value: `${stats?.rain || 0} mm/hr` },
@@ -64,7 +68,7 @@ export default function RightProperties({ model, params, onParamChange, onScenar
 
         {/* CUSTOM TERRAIN */}
         <div className="bg-white/5 border border-white/10 rounded-lg p-3">
-          <h3 className="text-[10px] font-bold mb-3 tracking-wider uppercase text-cyan-400">Custom Terrain</h3>
+          <h3 className="text-[10px] font-bold tracking-wider uppercase text-white/40 text-left">Custom Terrain</h3>
           <div className="flex gap-2">
             <button onClick={() => document.getElementById('inp-glb').click()}
               className="flex-1 py-1.5 border border-white/20 rounded text-cyan-400 font-bold hover:bg-white/10 transition-colors uppercase text-[9px] tracking-widest"
@@ -81,41 +85,49 @@ export default function RightProperties({ model, params, onParamChange, onScenar
 
         {/* PARAMETERS */}
         <div className="bg-white/5 border border-white/10 rounded-lg p-3">
-          <h3 className="text-[8px] font-bold mb-1.5 tracking-wider uppercase text-white/40">Parameters</h3>
-          <div className="space-y-1">
+          <h3 className="text-[10px] font-bold tracking-wider uppercase text-white/40 text-left">Parameters</h3>
+          <div className="space-y-1.5">
             {[
-              { label: 'Rainfall (mm/hr)', key: 'rainfall', min: 0, max: 200, step: 1 },
-              { label: 'Upstream Inflow (m³/s)', key: 'floodSrc', min: 0, max: 50, step: 1 },
-              { label: 'Fluid Viscosity (Water→Mud)', key: 'viscosity', min: 0.3, max: 0.98, step: 0.02 },
-              { label: 'Evaporation (mm/hr)', key: 'evaporation', min: 0, max: 10, step: 0.1 },
+              { label: 'Rainfall', key: 'rainfall', min: 0, max: 200, step: 1 },
+              { label: 'Upstream', key: 'floodSrc', min: 0, max: 50, step: 1 },
+              { label: 'Viscosity', key: 'viscosity', min: 0.3, max: 0.98, step: 0.02 },
+              { label: 'Evaporation', key: 'evaporation', min: 0, max: 10, step: 0.1 },
             ].map((p) => (
-              <div key={p.key} className="flex items-center gap-1 w-full min-w-0">
-                {/* Label - fixed width, left aligned */}
-                <span className="text-white/60 text-[8px] font-bold uppercase w-24 shrink-0 truncate text-left">
-                  {p.label}
-                </span>
-
-                {/* Slider with min/max labels - takes remaining space */}
-                <div className="flex-1 min-w-0">
+              <div key={p.key} className="flex items-center gap-2 w-full">
+                <span className="text-white/60 text-[9px] font-bold uppercase w-15 shrink-0 truncate text-left">{p.label}</span>
+                <div className="flex items-center gap-2">
                   <input type="range" min={p.min} max={p.max} step={p.step}
                     value={params[p.key] || 0}
                     onChange={(e) => onParamChange(p.key, parseFloat(e.target.value))}
-                    className="w-full h-0.5 bg-white/10 rounded-full appearance-none cursor-pointer"
+                    className="w-35 h-0.5 bg-white/10 rounded-full appearance-none cursor-pointer"
                     style={{
                       accentColor: '#ffffff',
+                      WebkitAppearance: 'none',
                     }}
                   />
-                  <div className="flex justify-between text-[7px] text-white/30">
-                    <span>{p.min}</span>
-                    <span>{p.max}</span>
+                  <style>{`
+                    input[type='range']::-webkit-slider-thumb {
+                      appearance: none;
+                      width: 10px;
+                      height: 10px;
+                      border-radius: 50%;
+                      background: white;
+                      cursor: pointer;
+                    }
+                    input[type='range']::-moz-range-thumb {
+                      width: 10px;
+                      height: 10px;
+                      border-radius: 50%;
+                      background: white;
+                      cursor: pointer;
+                      border: none;
+                    }
+                  `}</style>
+                  <div className="w-10 h-5 shrink-0 bg-white/10 border border-white/15 rounded flex items-center justify-center">
+                    <span className="text-white font-bold text-[8px]">
+                      {params[p.key]?.toFixed ? parseFloat(params[p.key].toFixed(2)) : params[p.key] ?? 0}
+                    </span>
                   </div>
-                </div>
-
-                {/* Value box - fixed width */}
-                <div className="w-9 h-4 shrink-0 bg-white/10 border border-white/15 rounded flex items-center justify-center">
-                  <span className="text-white font-bold text-[9px]">
-                    {params[p.key]?.toFixed ? parseFloat(params[p.key].toFixed(2)) : params[p.key] ?? 0}
-                  </span>
                 </div>
               </div>
             ))}
@@ -155,15 +167,23 @@ export default function RightProperties({ model, params, onParamChange, onScenar
         {/* SCENARIOS */}
         <div className="bg-white/5 border border-white/10 rounded-lg p-3">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-[10px] font-bold tracking-wider uppercase text-white/40">Scenarios</h3>
-            <button onClick={() => onScenario('reset')}
-              className="px-3 py-1 bg-red-600/20 border border-red-500/50 rounded text-red-500 hover:bg-red-600 hover:text-white text-[9px] font-bold transition-colors uppercase tracking-widest"
-            >RESET</button>
+            <h3 className="text-[10px] font-bold tracking-wider uppercase text-white/40 text-left">Scenarios</h3>
+            <div className="flex gap-2">
+              <button onClick={() => onScenario('pause')}
+                className="px-3 rounded text-[9px] font-bold transition-colors uppercase tracking-widest"
+                style={{ backgroundColor: 'rgba(108, 108, 108, 0.2)', border: '1px solid rgba(108, 108, 108, 0.5)', color: '#6C6C6C' }}
+                onMouseEnter={(e) => { e.target.style.backgroundColor = '#6C6C6C'; e.target.style.color = 'white'; }}
+                onMouseLeave={(e) => { e.target.style.backgroundColor = 'rgba(108, 108, 108, 0.2)'; e.target.style.color = '#6C6C6C'; }}
+              >PAUSE</button>
+              <button onClick={() => onScenario('reset')}
+                className="px-3 bg-red-600/20 border border-red-500/50 rounded text-red-500 hover:bg-red-600 hover:text-white text-[9px] font-bold transition-colors uppercase tracking-widest"
+              >RESET</button>
+            </div>
           </div>
           <div className="space-y-1.5">
             {scenarios.map((s) => (
               <button key={s.id} onClick={() => onScenario(s.id)}
-                className="w-full px-3 py-2 bg-white/5 hover:bg-white/10 border border-white/20 rounded text-white/70 hover:text-white text-[9px] font-bold transition-all duration-200 uppercase tracking-widest text-left"
+                className="w-full px-3 hover:bg-white/10 border border-white/20 rounded text-white/70 hover:text-white text-[9px] font-bold transition-all duration-200 uppercase tracking-widest text-left"
               >{s.label}</button>
             ))}
           </div>
@@ -171,11 +191,11 @@ export default function RightProperties({ model, params, onParamChange, onScenar
 
         {/* TIME CONTROL */}
         <div className="bg-white/5 border border-white/10 rounded-lg p-3">
-          <h3 className="text-[10px] font-bold mb-3 tracking-wider uppercase text-white/40">Time Control</h3>
+          <h3 className="text-[10px] font-bold tracking-wider uppercase text-white/40 text-left">Time Control</h3>
           <div className="grid grid-cols-2 gap-1.5">
             {ffButtons.map(ff => (
               <button key={ff.mins} onClick={() => onFastForward?.(ff.mins)}
-                className="px-2 py-1.5 bg-white/5 hover:bg-white/10 border border-white/20 rounded text-white/70 hover:text-white text-[9px] font-bold transition-all"
+                className="px-2  bg-white/5 hover:bg-white/10 border border-white/20 rounded text-white/70 hover:text-white text-[9px] font-bold transition-all"
               >{ff.label}</button>
             ))}
           </div>
@@ -183,31 +203,95 @@ export default function RightProperties({ model, params, onParamChange, onScenar
 
         {/* VISUAL ADJUSTMENTS */}
         <div className="bg-white/5 border border-white/10 rounded-lg p-3">
-          <h3 className="text-[10px] font-bold mb-3 tracking-wider uppercase text-white/40">Visual</h3>
+          <h3 className="text-[10px] font-bold tracking-wider uppercase text-white/40 text-left mb-3">camera</h3>
           <div className="space-y-3">
+            {/* Camera Buttons */}
+            <div>
+              <div className="grid grid-cols-3 gap-1.5">
+                {[
+                  { label: 'TOP DOWN', key: 'cameraTopDown' },
+                  { label: 'ISOMETRIC', key: 'cameraIsometric' },
+                  { label: 'CLOSE FLY', key: 'cameraCloseFly' },
+                ].map((cam) => (
+                  <button
+                    key={cam.key}
+                    onClick={() => onParamChange(cam.key, !params[cam.key])}
+                    className="px-2 py-1 rounded-[20px] text-[9px] font-bold uppercase tracking-widest transition-all bg-gray-700/30 border border-gray-600/40 text-gray-400 hover:bg-gray-700/50 hover:text-gray-300"
+                  >
+                    {cam.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Satellite & Buildings Toggles */}
             {[
-              { label: 'Water Alpha', key: 'waterAlpha', min: 0.2, max: 1, step: 0.02 },
-              { label: 'Forest Canopy', key: 'forestCanopy', min: 0, max: 40, step: 1 },
-              { label: 'Building Lift', key: 'buildingLift', min: 0, max: 35, step: 1 },
-            ].map((p) => (
-              <div key={p.key} className="flex flex-col gap-1">
-                <div className="flex justify-between">
-                  <span className="text-white/60 text-[10px] font-bold uppercase">{p.label}</span>
-                  <span className="text-white font-bold text-[10px]">{params[p.key] || 0}</span>
+              { label: 'Satellite', key: 'satellite' },
+              { label: 'Buildings', key: 'buildings' },
+            ].map((toggle) => (
+              <div key={toggle.key} className="flex items-center gap-2">
+                <span className="text-white/50 text-[11px] font-semibold">{toggle.label}</span>
+                <span className="text-white/30 text-[9px]">({params[toggle.key] ? 'ON' : 'OFF'})</span>
+                <div className="w-8 h-4 bg-[#2FB631] border-0 rounded-full relative flex items-center px-0.5 cursor-pointer transition-all" onClick={() => onParamChange(toggle.key, !params[toggle.key])}>
+                  <div
+                    className={`w-3 h-3 rounded-full transition-all ${
+                      params[toggle.key] === true ? 'bg-white ml-auto' : 'bg-white'
+                    }`}
+                  />
                 </div>
-                <input type="range" min={p.min} max={p.max} step={p.step}
-                  value={params[p.key] || 0}
-                  onChange={(e) => onParamChange(p.key, parseFloat(e.target.value))}
-                  className="accent-white/40 h-1 bg-white/10 rounded-full appearance-none"
-                />
               </div>
             ))}
+
+            {/* Sliders */}
+            <div className=" pt-3 mt-3">
+              {[
+                { label: 'Water Alpha', key: 'waterAlpha', min: 0.2, max: 1, step: 0.02 },
+                { label: 'Forest Canopy', key: 'forestCanopy', min: 0, max: 40, step: 1 },
+                { label: 'Building Lift', key: 'buildingLift', min: 0, max: 35, step: 1 },
+              ].map((p) => (
+                <div key={p.key} className="flex items-center justify-between gap-2 mb-3">
+                  <span className="text-white/50 text-[11px] font-semibold min-w-max">{p.label}</span>
+                  <input type="range" min={p.min} max={p.max} step={p.step}
+                    value={params[p.key] || 0}
+                    onChange={(e) => onParamChange(p.key, parseFloat(e.target.value))}
+                    className="flex-1 h-1 bg-gray-600/50 rounded-full appearance-none cursor-pointer"
+                    style={{
+                      accentColor: '#ffffff',
+                      WebkitAppearance: 'none',
+                    }}
+                  />
+                  <style>{`
+                    input[type='range']::-webkit-slider-thumb {
+                      appearance: none;
+                      width: 10px;
+                      height: 10px;
+                      border-radius: 50%;
+                      background: white;
+                      cursor: pointer;
+                    }
+                    input[type='range']::-moz-range-thumb {
+                      width: 10px;
+                      height: 10px;
+                      border-radius: 50%;
+                      background: white;
+                      cursor: pointer;
+                      border: none;
+                    }
+                  `}</style>
+                  <div className="w-12 h-6 shrink-0 bg-white/5 border border-white/20 rounded flex items-center justify-center">
+                    <span className="text-white font-bold text-[9px]">
+                      {Math.round(params[p.key] || 0)}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
 
         {/* WATER DEPTH LEGEND */}
         <div className="bg-white/5 border border-white/10 rounded-lg p-3">
-          <h3 className="text-[10px] font-bold mb-2 tracking-wider uppercase text-white/40">Water Depth</h3>
+          <h3 className="text-[10px] font-bold tracking-wider uppercase text-white/40 text-left">Water Depth</h3>
           <div className="space-y-1">
             {[
               { color: '#90e0ef', label: '< 0.1 m' },

@@ -1,133 +1,3 @@
-// import '@fontsource/chakra-petch';
-// import sentinelLogo from '../../assets/login/sentinelogo.svg';
-
-// export default function Loader() {
-//   const sources = [
-//     'OPENSKY · FIRMS · KIWISDR · MARITIME',
-//     'FRED · BLS · EIA · TREASURY · GSCPI',
-//     'TELEGRAM · SAFECAST · EPA · WHO · OFAC',
-//     'GDELT · NOAA · PATENTS · BLUESKY · REDDIT',
-//   ];
-
-//   return (
-//     <div
-//       className="fixed inset-0 flex items-center justify-center z-50 overflow-auto"
-//       style={{
-//         background: 'linear-gradient(0deg, rgba(0,0,0,0.95) 0%, rgba(5,10,20,0.95) 100%)',
-//         backgroundImage: `
-//           linear-gradient(0deg, rgba(0,0,0,0.95) 0%, rgba(5,10,20,0.95) 100%),
-//           repeating-linear-gradient(0deg, rgba(34, 197, 94, 0.15) 0px, rgba(34, 197, 94, 0.15) 1px, transparent 1px, transparent 40px),
-//           repeating-linear-gradient(90deg, rgba(34, 197, 94, 0.15) 0px, rgba(34, 197, 94, 0.15) 1px, transparent 1px, transparent 40px)
-//         `,
-//       }}
-//     >
-//       {/* Main content container */}
-//       <div className="relative flex flex-col items-center justify-center p-8 max-w-3xl w-full">
-//         {/* Logo with spinning rings */}
-//         <div className="relative w-72 h-72 flex items-center justify-center mb-8 shrink-0">
-//           {/* Animated dashed ring (green) */}
-//           <svg
-//             width="280"
-//             height="280"
-//             viewBox="0 0 280 280"
-//             className="absolute animate-spin-slow"
-//           >
-//             <circle
-//               cx="140"
-//               cy="140"
-//               r="130"
-//               fill="none"
-//               stroke="rgba(34, 197, 94, 0.8)"
-//               strokeWidth="2"
-//               strokeDasharray="12,8"
-//               strokeLinecap="round"
-//             />
-//           </svg>
-
-//           {/* Sentinel Logo in center */}
-//           <img
-//             src={sentinelLogo}
-//             alt="Sentinel"
-//             className="w-28 h-28 z-10"
-//           />
-//         </div>
-
-//         {/* SENTINEL text */}
-//         <h2 className="font-chakra text-4xl font-light text-white mb-8 tracking-wider text-center">
-//           SENTINEL
-//         </h2>
-
-//         {/* Main title */}
-//         <h1 className="font-chakra text-sm font-normal text-gray-300 mb-8 text-center w-full">
-//           INITIALIZING SPATIALGRID SENTINEL ENGINE V1
-//         </h1>
-
-//         {/* Status content */}
-//         <div className="w-full max-w-2xl text-gray-400 text-sm font-mono tracking-widest leading-loose text-left">
-//           {/* Connecting sources section */}
-//           <p className="mb-3 text-gray-300 font-normal">
-//             CONNECTING 31 OSINT SOURCES...
-//           </p>
-
-//           {/* Source list */}
-//           {sources.map((source, idx) => (
-//             <div key={idx} className="my-1 text-gray-400">
-//               <span className="text-gray-500 mr-2">
-//                 {idx === sources.length - 1 ? '└' : '—'}
-//               </span>
-//               {source}
-//             </div>
-//           ))}
-
-//           {/* Sweep complete section */}
-//           <p className="mt-6 mb-3 text-gray-300 font-normal">
-//             SWEEP COMPLETE – <span className="text-white font-semibold">30</span>
-//             /31 SOURCES <span className="text-green-500 font-semibold">OK</span>
-//           </p>
-
-//           {/* Status lines */}
-//           <p className="my-2 text-gray-400">
-//             <span className="text-gray-500 mr-2">—</span> ACLED CONFLICT LAYER:{' '}
-//             <span className="text-amber-500 font-semibold">DEGRADED</span>
-//           </p>
-//           <p className="my-2 text-gray-400">
-//             <span className="text-gray-500 mr-2">—</span> DATA CORRIDORS: ACTIVE ·
-//             DUAL PROJECTION:{' '}
-//             <span className="text-white font-semibold">READY</span>
-//           </p>
-//           <p className="my-2 mb-8 text-gray-400">
-//             <span className="text-gray-500 mr-2">—</span> INTELLIGENCE SYNTHESIS:{' '}
-//             <span className="text-white font-semibold">ACTIVE</span>
-//           </p>
-
-//           {/* Terminal active */}
-//           <p className="mt-8 text-green-500 font-semibold tracking-widest text-center text-base animate-pulse">
-//             TERMINAL ACTIVE
-//           </p>
-//         </div>
-//       </div>
-
-//       {/* Global animations */}
-//       <style>{`
-//         @keyframes spinClockwise {
-//           from {
-//             transform: rotate(0deg);
-//           }
-//           to {
-//             transform: rotate(360deg);
-//           }
-//         }
-
-//         .animate-spin-slow {
-//           animation: spinClockwise 6s linear infinite;
-//         }
-//       `}</style>
-//     </div>
-//   );
-// }
-
-
-
 import { useEffect, useState } from "react";
 import animateLogo from '../../assets/animateLogo.png';
 import vector from '../../assets/Vector.svg';
@@ -163,7 +33,6 @@ const styles = `
     position: relative;
   }
 
-  /* Grid layer */
   .sentinel-body::before {
     content: '';
     position: fixed;
@@ -176,7 +45,6 @@ const styles = `
     z-index: 0;
   }
 
-  /* Vignette layer */
   .sentinel-body::after {
     content: '';
     position: fixed;
@@ -188,7 +56,6 @@ const styles = `
     z-index: 0;
   }
 
-  /* Logo */
   .s-logo {
     position: fixed;
     top: 20px;
@@ -203,7 +70,6 @@ const styles = `
   .s-logo-icon {
     width: 120px;
     height: 120px;
-    // background: #cc0000;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -218,7 +84,6 @@ const styles = `
     display: block;
   }
 
-  /* Main */
   .s-main {
     position: relative;
     z-index: 2;
@@ -227,7 +92,6 @@ const styles = `
     align-items: center;
   }
 
-  /* Sentinel ring */
   .s-ring-wrap {
     position: relative;
     width: 220px;
@@ -240,6 +104,8 @@ const styles = `
     inset: 0;
     width: 100%;
     height: 100%;
+    animation: sSpinRing 7s linear infinite;
+    transform-origin: center;
   }
 
   .s-ring-rotate {
@@ -296,7 +162,6 @@ const styles = `
 
   .s-status-block {
     margin-top: 16px;
-    opacity: 0;
   }
 
   .s-badge {
@@ -312,9 +177,8 @@ const styles = `
     font-family: 'Rajdhani', sans-serif;
     font-weight: 550;
     font-size: 18px;
-    letter-spacing: 0.03em; }
-  // .s-badge-active   { color: var(--green); }
-  // .s-badge-ready    { color: var(--green); }
+    letter-spacing: 0.03em;
+  }
 
   .s-sweep-line {
     font-size: 12px;
@@ -337,7 +201,6 @@ const styles = `
     font-weight: 700;
   }
 
-  /* Terminal active */
   .s-terminal-active {
     margin-top: 32px;
     font-family: 'Rajdhani', sans-serif;
@@ -358,7 +221,6 @@ const styles = `
     animation: sBlink 1s step-end infinite;
   }
 
-  /* Corner accents */
   .s-corner-tl, .s-corner-br {
     position: fixed;
     width: 60px;
@@ -379,14 +241,13 @@ const styles = `
     border-left: 1px solid var(--green);
   }
 
-  /* Staggered line animations */
-  .s-d1 { animation: sFadeInLine 0.3s ease 1.0s forwards; }
-  .s-d2 { animation: sFadeInLine 0.3s ease 1.3s forwards; }
-  .s-d3 { animation: sFadeInLine 0.3s ease 1.6s forwards; }
-  .s-d4 { animation: sFadeInLine 0.3s ease 1.9s forwards; }
-  .s-d5 { animation: sFadeInLine 0.3s ease 2.2s forwards; }
-  .s-sweep  { animation: sFadeInLine 0.4s ease 2.6s forwards; }
-  .s-status { animation: sFadeInLine 0.4s ease 3.0s forwards; }
+  /* TYPING CURSOR */
+  .typing-cursor::after {
+    content: '█';
+    animation: sBlink 0.7s step-end infinite;
+    color: var(--green);
+    font-size: 0.9em;
+  }
 
   @keyframes sSpinRing {
     from { transform: rotate(0deg); }
@@ -419,26 +280,94 @@ const styles = `
     0%, 100% { opacity: 1; }
     50%       { opacity: 0; }
   }
-    .s-ring-svg {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  animation: sSpinRing 7s linear infinite;
-  transform-origin: center;
-}
-
-
-  
 `;
 
-export default function Main() {
+// ── typing engine ──────────────────────────────────────────────
+const TYPING_LINES = [
+  { key: 'header',    text: 'INITIALIZING SPATIALGRID SENTINEL ENGINE V1', speed: 28 },
+  { key: 'connect',   text: 'CONNECTING 31 OSINT SOURCES...',               speed: 32 },
+  { key: 'src1',      text: 'OPENSKY · FIRMS · KIWISDR · MARITIME',         speed: 22 },
+  { key: 'src2',      text: 'FRED · BLS · EIA · TREASURY · GSCPI',          speed: 22 },
+  { key: 'src3',      text: 'TELEGRAM · SAFECAST · EPA · WHO · OFAC',       speed: 22 },
+  { key: 'src4',      text: 'GDELT · NOAA · PATENTS · BLUESKY · REDDIT',    speed: 22 },
+  { key: 'sweep',     text: 'SWEEP COMPLETE — 30/31 SOURCES OK',            speed: 30 },
+  { key: 'acled',     text: 'DEGRADED',                                      speed: 40 },
+  { key: 'corridor',  text: 'DATA CORRIDORS: ACTIVE · DUAL PROJECTION: READY', speed: 25 },
+  { key: 'intel',     text: 'INTELLIGENCE SYNTHESIS: ACTIVE',                speed: 28 },
+];
+
+const LINE_GAP = 180; // ms between lines
+const MIN_DURATION = 15000; // 15 seconds minimum loading time
+
+function useTypingSequence() {
+  const [typed, setTyped] = useState({});
+  const [visibleLines, setVisibleLines] = useState({});
   const [terminalVisible, setTerminalVisible] = useState(false);
 
   useEffect(() => {
-    const timer = setTimeout(() => setTerminalVisible(true), 3600);
-    return () => clearTimeout(timer);
+    let cancelled = false;
+    const startTime = Date.now(); // record start time
+
+    const typeText = (key, text, speed) =>
+      new Promise(resolve => {
+        setVisibleLines(prev => ({ ...prev, [key]: true }));
+        let i = 0;
+        const tick = () => {
+          if (cancelled) return;
+          if (i <= text.length) {
+            const slice = text.slice(0, i);
+            setTyped(prev => ({ ...prev, [key]: slice }));
+            i++;
+            setTimeout(tick, speed + (Math.random() * 20 - 10));
+          } else {
+            resolve();
+          }
+        };
+        tick();
+      });
+
+    const run = async () => {
+      await new Promise(r => setTimeout(r, 600));
+      for (const { key, text, speed } of TYPING_LINES) {
+        if (cancelled) return;
+        await typeText(key, text, speed);
+        await new Promise(r => setTimeout(r, LINE_GAP));
+      }
+      if (!cancelled) {
+        await new Promise(r => setTimeout(r, 400));
+
+        // Wait out remaining time to enforce 15s minimum
+        const elapsed = Date.now() - startTime;
+        const remaining = MIN_DURATION - elapsed;
+        if (remaining > 0) {
+          await new Promise(r => setTimeout(r, remaining));
+        }
+
+        if (!cancelled) setTerminalVisible(true);
+      }
+    };
+
+    run();
+    return () => { cancelled = true; };
   }, []);
+
+  return { typed, visibleLines, terminalVisible };
+}
+// ──────────────────────────────────────────────────────────────
+
+export default function Main() {
+  const { typed, visibleLines, terminalVisible } = useTypingSequence();
+
+  // attach blinking cursor to the line currently being typed
+  const activeLine = [...TYPING_LINES].reverse().find(
+    ({ key, text }) => visibleLines[key] && (typed[key] ?? '').length < text.length
+  )?.key;
+
+  const t = (key) => {
+    const val = typed[key] ?? '';
+    const isActive = key === activeLine;
+    return isActive ? <span className="typing-cursor">{val}</span> : val;
+  };
 
   return (
     <>
@@ -449,8 +378,6 @@ export default function Main() {
         <div className="s-logo">
           <div className="s-logo-icon">
             <img src={LogoName} alt="Spatial Grid Logo" width="48" height="48" />
-
- 
           </div>
         </div>
 
@@ -464,12 +391,12 @@ export default function Main() {
           <div className="s-ring-wrap">
             <div className="s-scan-line" />
 
-           <img
-  src={vector}
-  alt="Sentinel Ring"
-  className="s-ring-svg"
-  style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
-/>
+            <img
+              src={vector}
+              alt="Sentinel Ring"
+              className="s-ring-svg"
+              style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
+            />
 
             <div className="s-sentinel-center">
               <div className="s-drone-icon">
@@ -481,48 +408,72 @@ export default function Main() {
 
           {/* Terminal */}
           <div className="s-terminal chakra-petch-light">
-            <div className="s-term-header s-count">INITIALIZING SPATIALGRID SENTINEL ENGINE V1</div>
-              
-            <div className="s-term-line s-d1">CONNECTING 31 OSINT SOURCES...</div>
-              
-            <div className="s-term indent s-d2">
-              <span className="s-arrow">— </span>
-              <span className="s-source-list">OPENSKY · FIRMS · KIWISDR · MARITIME</span>
-            </div>
-            <div className="s-term indent s-d3">
-              <span className="s-arrow">— </span>
-              <span className="s-source-list">FRED · BLS · EIA · TREASURY · GSCPI</span>
-            </div>
-            <div className="s-term indent s-d4">
-              <span className="s-arrow">— </span>
-              <span className="s-source-list">TELEGRAM · SAFECAST · EPA · WHO · OFAC</span>
-            </div>
-            <div className="s-term indent s-d5">
-              <span className="s-corner">└ </span>
-              <span className="s-source-list">GDELT · NOAA · PATENTS · BLUESKY · REDDIT</span>
-            </div>
-               
-            <div className="s-term indent">
-              SWEEP COMPLETE — 
-              <span className="s-count">30</span>/31 SOURCES 
-              <span className="s-count">OK</span>
-            </div>
 
-            <div className={`s-status-block s-status`}>
-              <div className="s-status-line">
+            {visibleLines.header && (
+              <div className="s-term-header s-count">{t('header')}</div>
+            )}
+
+            {visibleLines.connect && (
+              <div className="s-term-line">{t('connect')}</div>
+            )}
+
+            {visibleLines.src1 && (
+              <div className="s-term indent">
                 <span className="s-arrow">— </span>
-                ACLED CONFLICT LAYER: <span className="s-badge s-badge-degraded">DEGRADED</span>
+                <span className="s-source-list">{t('src1')}</span>
               </div>
-              <div className="s-status-line">
+            )}
+
+            {visibleLines.src2 && (
+              <div className="s-term indent">
                 <span className="s-arrow">— </span>
-                DATA CORRIDORS: ACTIVE
-                {" · "}DUAL PROJECTION: <span className=" s-count">READY</span>
+                <span className="s-source-list">{t('src2')}</span>
               </div>
-              <div className="s-status-line">
+            )}
+
+            {visibleLines.src3 && (
+              <div className="s-term indent">
                 <span className="s-arrow">— </span>
-                INTELLIGENCE SYNTHESIS: <span className="s-count">ACTIVE</span>
+                <span className="s-source-list">{t('src3')}</span>
               </div>
-            </div>
+            )}
+
+            {visibleLines.src4 && (
+              <div className="s-term indent">
+                <span className="s-corner">└ </span>
+                <span className="s-source-list">{t('src4')}</span>
+              </div>
+            )}
+
+            {visibleLines.sweep && (
+              <div className="s-term indent">
+                {t('sweep')}
+              </div>
+            )}
+
+            {(visibleLines.acled || visibleLines.corridor || visibleLines.intel) && (
+              <div className="s-status-block">
+                {visibleLines.acled && (
+                  <div className="s-status-line">
+                    <span className="s-arrow">— </span>
+                    ACLED CONFLICT LAYER: <span className="s-badge s-badge-degraded">{t('acled')}</span>
+                  </div>
+                )}
+                {visibleLines.corridor && (
+                  <div className="s-status-line">
+                    <span className="s-arrow">— </span>
+                    {t('corridor')}
+                  </div>
+                )}
+                {visibleLines.intel && (
+                  <div className="s-status-line">
+                    <span className="s-arrow">— </span>
+                    {t('intel')}
+                  </div>
+                )}
+              </div>
+            )}
+
           </div>
 
           <div className={`s-terminal-active ${terminalVisible ? "visible" : ""}`}>
